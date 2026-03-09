@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       String    @id @default(uuid())
+  name     String
+  workouts Workout[]
+}
+
+model Workout {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  userId      String   
+  user        User     @relation(fields: [userId], references: [id])
+  
+  exercises   WorkoutExercise[]
+  logs        WorkoutLog[]
+  createdAt   DateTime @default(now())
+}
+
+model WorkoutExercise {
+  id          String   @id @default(uuid())
+  name        String   
+  order       Int      
+  workoutId   String
+  exerciseId  String  
+  workout     Workout  @relation(fields: [workoutId], references: [id])
+  exercise    Exercise @relation(fields: [exerciseId], references: [id])
+  logs        SetLog[] 
+}
+
+model WorkoutLog {
+  id          String   @id @default(uuid())
+  workoutId   String
+  workoutName String   
+  completedAt DateTime @default(now()) 
+  duration    Int?
+  
+  workout     Workout  @relation(fields: [workoutId], references: [id])
+}
+
+model SetLog {
+  id                String          @id @default(uuid())
+  weight            Float           
+  reps              Int             
+  createdAt         DateTime        @default(now())
+  workoutExerciseId String
+  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id])
+}
+
+model Exercise {
+  id          String   @id @default(uuid())
+  name        String
+  muscleGroup String 
+  workouts    WorkoutExercise[]
+}

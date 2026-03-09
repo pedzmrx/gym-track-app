@@ -1,0 +1,15 @@
+# Dependências
+node_modules/
+dist/
+
+# Variáveis de ambiente (Segurança!)
+.env
+
+# Banco de dados local e Docker
+postgres_data/
+docker-compose.override.yml
+
+# Logs e Cache
+*.log
+.npm
+.eslintcache
