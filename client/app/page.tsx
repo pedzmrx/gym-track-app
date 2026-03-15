@@ -1,80 +1,80 @@
-'use client';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import Image from "next/image";
+import { Bell, Dumbbell } from "lucide-react";
+import ConsistencyWidget from "@/components/ConsistencyWidget";
+import TodayWorkoutCard from "@/components/TodayWorkoutCard";
+import GoogleLoginButton from "@/components/GoogleLoginButton";
 
-export default function Dashboard() {
-  const [stats, setStats] = useState({ workouts: 0, exercises: 0 });
-  const [recentLogs, setRecentLogs] = useState([]);
+export default async function Home() {
+  const session = await getServerSession(authOptions);
 
-  useEffect(() => {
-    Promise.all([
-      fetch('/api/workouts').then(res => res.json()),
-      fetch('/api/exercises').then(res => res.json())
-    ]).then(([workouts, exercises]) => {
-      setStats({
-        workouts: workouts.length,
-        exercises: exercises.length
-      });
-    });
-  }, []);
+  // SE O USUÁRIO NÃO ESTIVER LOGADO:
+  if (!session) {
+    return (
+      <main className="relative min-h-[100dvh] flex flex-col items-center justify-end p-6">
+        <img
+          src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop"
+          alt="Fundo Academia"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent"></div>
 
+        {/* Conteúdo do Login */}
+        <div className="relative z-10 w-full max-w-md flex flex-col gap-10 text-center pb-12">
+          <div className="flex flex-col items-center gap-4">
+            <div className="bg-blue-600 p-4 rounded-3xl shadow-lg shadow-blue-600/30">
+              <Dumbbell size={40} className="text-white" />
+            </div>
+            <h1 className="text-5xl font-black text-white tracking-tight">
+              GYM <span className="text-blue-500">TRACK</span>
+            </h1>
+            <p className="text-zinc-400 text-lg font-medium">
+              Faça login e vamos crescer sua Franga!
+            </p>
+          </div>
+
+          <GoogleLoginButton />
+        </div>
+      </main>
+    );
+  }
+
+  // SE O USUÁRIO ESTIVER LOGADO:
   return (
-    <div className="max-w-6xl mx-auto p-8 animate-in fade-in duration-700">
-      <header className="mb-10">
-        <h1 className="text-4xl font-black text-white mb-2">Bem-vinda de volta! 🔥</h1>
-        <p className="text-slate-400">Pronta para esmagar as metas de hoje?</p>
+    <main className="min-h-[100dvh] max-w-md mx-auto p-6 flex flex-col gap-6">
+      <header className="flex items-center justify-between w-full mt-4">
+        <div className="flex items-center gap-4">
+          {session.user?.image ? (
+            <Image
+              src={session.user.image}
+              alt="Foto de perfil"
+              width={48}
+              height={48}
+              className="rounded-full border-2 border-zinc-800"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center">
+              <span className="text-zinc-400 font-medium">U</span>
+            </div>
+          )}
+
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold tracking-tight">
+              Olá, {session.user?.name?.split(" ")[0] || "Atleta"}
+            </h1>
+            <p className="text-zinc-400 text-sm">Bora treinar hoje?</p>
+          </div>
+        </div>
+
+        <button className="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-2xl transition-colors shadow-lg shadow-blue-600/20">
+          <Bell size={20} />
+        </button>
       </header>
 
-      {/* CARDS DE RESUMO */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-3xl shadow-xl shadow-blue-900/20">
-          <span className="text-blue-100 text-sm font-bold uppercase opacity-80">Treinos Montados</span>
-          <div className="text-4xl font-black mt-2">{stats.workouts}</div>
-        </div>
-        
-        <div className="bg-slate-800/50 border border-slate-700 p-6 rounded-3xl">
-          <span className="text-slate-400 text-sm font-bold uppercase">Exercícios no Catálogo</span>
-          <div className="text-4xl font-black mt-2 text-blue-400">{stats.exercises}</div>
-        </div>
-
-        <div className="bg-slate-800/50 border border-slate-700 p-6 rounded-3xl">
-          <span className="text-slate-400 text-sm font-bold uppercase">Consistência (Semana)</span>
-          <div className="text-4xl font-black mt-2 text-green-400">85%</div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* ACESSO RÁPIDO */}
-        <section className="bg-slate-800/20 border border-slate-800 rounded-3xl p-8">
-          <h2 className="text-xl font-bold mb-6">Ações Rápidas</h2>
-          <div className="flex flex-col gap-4">
-            <Link href="/treinos" className="group p-4 bg-slate-900 hover:bg-blue-600 rounded-2xl border border-slate-700 transition-all flex justify-between items-center">
-              <div>
-                <span className="block font-bold group-hover:text-white">Iniciar um Treino</span>
-                <span className="text-xs text-slate-500 group-hover:text-blue-100">Escolha uma ficha e comece agora</span>
-              </div>
-              <span className="text-2xl">➔</span>
-            </Link>
-            
-            <Link href="/biblioteca" className="group p-4 bg-slate-900 hover:bg-slate-800 rounded-2xl border border-slate-700 transition-all flex justify-between items-center">
-              <div>
-                <span className="block font-bold">Gerenciar Catálogo</span>
-                <span className="text-xs text-slate-500">Adicione ou edite exercícios</span>
-              </div>
-              <span className="text-2xl opacity-30 group-hover:opacity-100">⚙️</span>
-            </Link>
-          </div>
-        </section>
-
-        {/* ÚLTIMOS TREINOS */}
-        <section className="bg-slate-800/20 border border-slate-800 rounded-3xl p-8">
-          <h2 className="text-xl font-bold mb-6">Histórico Recente</h2>
-          <div className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-slate-800 rounded-2xl text-slate-600">
-            <p>Nenhum log registrado ainda.</p>
-            <p className="text-xs">Os treinos concluídos aparecerão aqui.</p>
-          </div>
-        </section>
-      </div>
-    </div>
+      <ConsistencyWidget />
+      <TodayWorkoutCard />
+    </main>
   );
 }
