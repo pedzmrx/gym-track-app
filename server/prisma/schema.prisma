@@ -20,7 +20,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   workouts      Workout[]
-  workouts      Workout[]
+  logs          WorkoutLog[]
 }
 
 model Account {
@@ -29,12 +29,12 @@ model Account {
   type               String
   provider           String
   providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?     
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
   token_type         String?
   scope              String?
-  id_token           String?  @db.Text
+  id_token           String? @db.Text
   session_state      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -51,68 +51,31 @@ model Session {
 }
 
 model Workout {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  userId      String   
-  user        User     @relation(fields: [userId], references: [id])
-  
-  exercises   WorkoutExercise[]
-  logs        WorkoutLog[]
-  createdAt   DateTime @default(now())
-}
-
-model WorkoutExercise {
-  id          String   @id @default(uuid())
-  name        String   
-  order       Int      
-  workoutId   String
-  exerciseId  String  
-  workout     Workout  @relation(fields: [workoutId], references: [id])
-  exercise    Exercise @relation(fields: [exerciseId], references: [id])
-  logs        SetLog[] 
-}
-
-model WorkoutLog {
-  id          String   @id @default(uuid())
-  workoutId   String
-  workoutName String   
-  completedAt DateTime @default(now()) 
-  duration    Int?
-  
-  workout     Workout  @relation(fields: [workoutId], references: [id])
-}
-
-model SetLog {
-  id                String          @id @default(uuid())
-  weight            Float           
-  reps              Int             
-  createdAt         DateTime        @default(now())
-  workoutExerciseId String
-  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id])
-}
-
-model Exercise {
-  id          String   @id @default(uuid())
-  name        String
-  muscleGroup String 
-  workouts    WorkoutExercise[]
-}
-
-model Workout {
   id        String     @id @default(cuid())
   name      String     
   userId    String
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  exercises Exercise[] 
+  exercises Exercise[]
+  logs      WorkoutLog[] 
   createdAt DateTime   @default(now())
+  
 }
 
 model Exercise {
-  id         String  @id @default(cuid())
-  name       String  
-  sets       String  
-  reps       String  
-  workoutId  String
-  workout    Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  name      String  
+  sets      String  
+  reps      String  
+  workoutId String
+  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+}
+
+model WorkoutLog {
+  id          String   @id @default(cuid())
+  workoutId   String
+  workoutName String
+  userId      String
+  completedAt DateTime @default(now())
+  workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
