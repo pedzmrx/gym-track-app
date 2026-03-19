@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { WorkoutsService } from './workouts.service';
 
 @Controller('workouts')
@@ -6,12 +6,12 @@ export class WorkoutsController {
   constructor(private readonly workoutsService: WorkoutsService) {}
 
   @Post()
-  create(@Body() data: { title: string; description?: string; userId: string }) {
-    return this.workoutsService.create(data);
+create(@Body() data: { name: string; userId: string }) {
+  return this.workoutsService.create(data);
   }
 
-  @Get()
-  findAll() {
-    return this.workoutsService.findAll();
+  @Get(':userId')
+findAll(@Param('userId') userId: string) {
+  return this.workoutsService.findAll(userId);
   }
 }

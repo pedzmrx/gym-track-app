@@ -9,7 +9,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     const pool = new Pool({ 
       connectionString: "postgresql://admin:password123@localhost:5432/gym_db?schema=public" 
     });
-    const adapter = new PrismaPg(pool);
+    const adapter = new PrismaPg(pool as any);
 
     super({ adapter } as any);
   }

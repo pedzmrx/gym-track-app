@@ -5,25 +5,26 @@ import { PrismaService } from '../prisma.service';
 export class WorkoutsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: { title: string; description?: string; userId: string }) {
+  async create(data: { name: string; userId: string }) {
     return this.prisma.workout.create({
       data: {
-        title: data.title,
-        description: data.description,
+        name: data.name,
         userId: data.userId,
       },
     });
   }
 
-  async findAll() {
+  async findAll(userId: string) {
     return this.prisma.workout.findMany({
-      include: {
-        exercises: {
-          include: {
-            exercise: true 
-          }
-        }
-      }
+      where: { userId },
+      include: { exercises: true },
+    });
+  }
+
+  async findOne(id: string) {
+    return this.prisma.workout.findUnique({
+      where: { id },
+      include: { exercises: true },
     });
   }
 }

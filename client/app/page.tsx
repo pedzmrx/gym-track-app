@@ -2,100 +2,110 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { getDashboardStats } from "./actions";
 import { redirect } from "next/navigation";
-import { Activity, Flame, ChevronRight, Dumbbell } from "lucide-react";
+import { Activity, Flame, ChevronRight, Dumbbell, Calendar, Zap } from "lucide-react";
 import Link from "next/link";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/login");
 
-  const { totalLogs, ultimosLogs, logsRecentas } = await getDashboardStats((session.user as any).id);
-
-  const diasSemana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+  const { ultimosLogs, logsRecentas } = await getDashboardStats((session.user as any).id);
+  const diasSemana = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'];
   const hoje = new Date().getDay();
 
   return (
-    <main className="min-h-screen bg-black text-white p-6 pb-40 max-w-md mx-auto">
-      <header className="mt-8 mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none">
-            WORKOUT<span className="text-blue-600">.</span>
-          </h1>
-          <p className="text-zinc-500 font-bold text-[10px] uppercase tracking-[0.3em] mt-1">Status: Ativo</p>
-        </div>
-        <div className="w-12 h-12 bg-zinc-900 rounded-2xl border border-zinc-800 flex items-center justify-center overflow-hidden">
-          {session.user.image ? <img src={session.user.image} alt="Perfil" /> : <Activity size={20} />}
+    <main className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-zinc-100 p-6 pb-44 max-w-md mx-auto relative overflow-x-hidden transition-colors duration-500">
+      
+      {/* Header */}
+      <header className="mt-4 mb-8 flex justify-between items-center px-1">
+        <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-400 dark:text-zinc-500">Dashboard</span>
+        <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden transition-colors">
+          {session.user.image ? <img src={session.user.image} alt="User" /> : <Activity size={18} className="text-zinc-400" />}
         </div>
       </header>
 
-      {/* MAPA DE CONSISTÊNCIA */}
-      <section className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2.5rem] mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400">Consistência 7D</h3>
-          <div className="flex items-center gap-1 text-orange-500">
-            <Flame size={14} fill="currentColor" />
-            <span className="text-xs font-black italic">ON FIRE</span>
+      {/* CARD PRINCIPAL */}
+      <section className="relative h-64 w-full overflow-hidden rounded-[2.5rem] mb-10 group border border-zinc-200 dark:border-zinc-800 shadow-xl dark:shadow-2xl transition-all">
+        <img 
+          src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=600&auto=format&fit=crop" 
+          className="absolute inset-0 w-full h-full object-cover opacity-80 dark:opacity-50 group-hover:scale-105 transition-transform duration-700"
+          alt="Treino"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent dark:from-black dark:via-black/40" />
+        
+        <div className="absolute inset-0 p-8 flex flex-col justify-between">
+          <h2 className="text-3xl font-black italic uppercase tracking-tighter leading-none text-white">Logo</h2>
+          <div className="flex justify-between items-end">
+            <div>
+              <h3 className="text-2xl font-black italic uppercase text-white leading-tight">Olá, {session.user.name?.split(' ')[0]}</h3>
+              <p className="text-zinc-300 dark:text-zinc-400 text-xs font-bold mt-1 uppercase tracking-wider">Bora treinar hoje?</p>
+            </div>
+            <Link href="/treinos" className="bg-blue-600 text-white font-black px-6 py-3 rounded-2xl shadow-lg hover:bg-blue-500 active:scale-90 transition-all italic text-sm">
+              Bora!
+            </Link>
           </div>
         </div>
-        <div className="flex justify-between items-center px-2">
-          {diasSemana.map((dia, i) => {
-            const temTreino = logsRecentas.some(l => new Date(l.completedAt).getDay() === i);
-            return (
-              <div key={i} className="flex flex-col items-center gap-2">
-                <div className={`w-8 h-8 rounded-xl border flex items-center justify-center transition-all ${
-                  temTreino 
-                  ? "bg-blue-600 border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
-                  : "bg-zinc-950 border-zinc-800"
-                }`}>
-                  {temTreino && <Dumbbell size={14} className="text-white" />}
+      </section>
+
+      {/* CONSISTÊNCIA */}
+      <section className="mb-10 px-1">
+        <div className="flex justify-between items-center mb-6">
+          <h4 className="text-sm font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-sans">Consistência</h4>
+          <button className="text-blue-600 dark:text-blue-500 text-[10px] font-black uppercase tracking-widest">Ver Histórico</button>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2">
+            {diasSemana.map((dia, i) => {
+              const treinou = logsRecentas.some((l: any) => new Date(l.completedAt).getDay() === i);
+              return (
+                <div key={i} className="flex flex-col items-center gap-2">
+                  <div className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
+                    treinou 
+                      ? "bg-blue-600 border-blue-400 shadow-md" 
+                      : "bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
+                  }`}>
+                    {treinou && <Zap size={12} fill="white" className="text-white" />}
+                  </div>
+                  <span className="text-[9px] font-black text-zinc-400 dark:text-zinc-600 uppercase">{dia}</span>
                 </div>
-                <span className={`text-[10px] font-black ${temTreino ? "text-white" : "text-zinc-600"}`}>{dia}</span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          
+          <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-2xl flex items-center gap-2">
+            <Flame size={16} className="text-orange-500" fill="currentColor" />
+            <span className="text-lg font-black italic text-orange-500">15</span>
+          </div>
         </div>
       </section>
 
-      {/* ÚLTIMOS TREINOS COM FOTO */}
-      <section className="mb-10">
-        <h2 className="text-xl font-black italic uppercase tracking-tight mb-6">Atividade Recente</h2>
-        <div className="flex flex-col gap-4">
-          {ultimosLogs.map((log) => (
-            <div key={log.id} className="relative h-32 w-full overflow-hidden rounded-[2rem] group border border-zinc-800">
-              {/* Imagem de Fundo (Placeholder dinâmico) */}
-              <img 
-                src={`https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=400&auto=format&fit=crop`} 
-                className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-500"
-                alt="Treino"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-              
-              <div className="absolute inset-0 p-6 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-black text-blue-500 uppercase tracking-widest mb-1">Finalizado</p>
-                  <h3 className="text-xl font-black italic uppercase text-white">{log.workoutName}</h3>
-                  <p className="text-zinc-400 text-[10px] font-bold">
-                    {new Date(log.completedAt).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit' })}
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                  <ChevronRight size={20} />
-                </div>
+      {/* TREINO DE HOJE */}
+      <section className="px-1 mb-20">
+        <div className="flex justify-between items-center mb-6">
+          <h4 className="text-sm font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-sans">Treino de Hoje</h4>
+          <button className="text-blue-600 dark:text-blue-500 text-[10px] font-black uppercase tracking-widest">Ver Treinos</button>
+        </div>
+
+        <div className="relative bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] p-6 overflow-hidden group active:scale-[0.98] transition-all shadow-sm">
+          <div className="relative z-10">
+            <span className="bg-zinc-200 dark:bg-zinc-800 text-[9px] font-black px-3 py-1 rounded-full text-zinc-500 dark:text-zinc-400 uppercase tracking-widest transition-colors">Sexta</span>
+            <div className="mt-4 flex justify-between items-end">
+              <div className="text-left">
+                <h3 className="text-2xl font-black italic uppercase text-zinc-900 dark:text-white transition-colors">Superiores</h3>
+                <p className="text-zinc-500 dark:text-zinc-500 text-[10px] font-bold mt-1 uppercase tracking-widest">45min • 4 exercícios</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                <Dumbbell size={20} className="text-white" />
               </div>
             </div>
-          ))}
+          </div>
+          <div className="absolute right-0 top-0 w-1/2 h-full opacity-10 dark:opacity-20 grayscale pointer-events-none transition-opacity">
+             <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=200" className="object-cover h-full" alt="" />
+          </div>
         </div>
       </section>
 
-      {/* QUICK ACTION */}
-      <div className="fixed bottom-28 left-0 w-full px-6 flex justify-center">
-        <Link 
-          href="/treinos" 
-          className="w-full max-w-md bg-white text-black font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 shadow-xl active:scale-95 transition-all uppercase italic"
-        >
-          Iniciar Nova Sessão
-        </Link>
-      </div>
     </main>
   );
 }

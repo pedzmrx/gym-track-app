@@ -6,12 +6,8 @@ export class ExercisesController {
   constructor(private readonly exercisesService: ExercisesService) {}
 
   @Post()
-  create(@Body() data: { name: string; muscleGroup: string }) {
-    return this.exercisesService.create(data);
+create(@Body() data: { name: string; sets: string; reps: string; workoutId: string }) {
+  return this.exercisesService.create(data);
   }
 
-  @Get()
-  findAll() {
-    return this.exercisesService.findAll();
-  }
-}
+};
