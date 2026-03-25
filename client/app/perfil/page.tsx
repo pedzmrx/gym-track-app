@@ -9,7 +9,7 @@ export default async function PerfilPage() {
   if (!session?.user) redirect("/login");
 
   return (
-    <main className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-zinc-100 p-6 pb-44 max-w-md mx-auto transition-colors duration-500">
+    <main className="min-h-screen bg-black text-white p-6 pb-44 max-w-md mx-auto">
       <header className="mt-8 mb-10 text-center">
         <h1 className="text-2xl font-black italic uppercase tracking-tighter">Perfil</h1>
       </header>
@@ -33,8 +33,6 @@ export default async function PerfilPage() {
       <section className="space-y-4">
         <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 px-4 mb-2">Configurações</h3>
         
-        {/* Nosso Interruptor de Tema */}
-        <ThemeToggle />
 
         <div className="flex items-center justify-between p-4 bg-zinc-900/30 border border-zinc-800 rounded-3xl group active:scale-[0.98] transition-all">
           <div className="flex items-center gap-3 text-zinc-400 group-hover:text-white">

@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   const hoje = new Date().getDay();
 
   return (
-    <main className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-zinc-100 p-6 pb-44 max-w-md mx-auto relative overflow-x-hidden transition-colors duration-500">
+    <main className="min-h-screen bg-black text-white p-6 pb-44 max-w-md mx-auto">
       
       {/* Header */}
       <header className="mt-4 mb-8 flex justify-between items-center px-1">

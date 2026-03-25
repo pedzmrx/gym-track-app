@@ -1,83 +1,114 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { redirect } from "next/navigation";
-import { Plus, ChevronRight, Dumbbell, Clock } from "lucide-react";
+import { Plus, ChevronRight, Dumbbell, Activity } from "lucide-react";
 import Link from "next/link";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 
+// 1. Interfaces de Tipagem
+interface CustomUser {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+}
+
+interface CustomSession {
+  user: CustomUser;
+}
+
+// 2. Configuração do Prisma (Singleton)
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool as any);
-const prisma = new PrismaClient({ adapter });
+
+const prisma = globalForPrisma.prisma || new PrismaClient({ adapter });
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export default async function TreinosPage() {
-  const session = await getServerSession(authOptions);
+  const session = (await getServerSession(authOptions)) as CustomSession | null;
 
   if (!session?.user) {
     redirect("/");
   }
 
-  // Busca no Banco de Dados
+  const userId = session.user.id;
+
   const meusTreinos = await prisma.workout.findMany({
-    where: {
-      userId: (session.user as any).id
-    },
-    include: {
-      exercises: true
-    },
-    orderBy: {
-      createdAt: "desc"
-    }
+    where: { userId: userId },
+    include: { exercises: true },
+    orderBy: { createdAt: "desc" }
   });
 
   return (
-    <main className="min-h-[100dvh] max-w-md mx-auto p-6 flex flex-col gap-6 pb-24">
-      <header className="mt-4 text-left">
-        <h1 className="text-3xl font-black text-white tracking-tight italic uppercase">Meus Treinos</h1>
-        <p className="text-zinc-500 text-sm font-medium tracking-wide">Sua rotina personalizada</p>
+    <main className="min-h-screen bg-black text-white p-6 pb-44 max-w-md mx-auto relative overflow-x-hidden">
+      
+      {/* HEADER */}
+      <header className="mt-4 mb-8 flex justify-between items-center px-1">
+        <div>
+          <span className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500 block mb-1">Biblioteca</span>
+          <h1 className="text-3xl font-black italic uppercase tracking-tighter leading-none">Meus Treinos</h1>
+        </div>
+        <Link 
+          href="/treinos/novo"
+          className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.3)] active:scale-90 transition-all"
+        >
+          <Plus size={24} strokeWidth={3} className="text-white" />
+        </Link>
       </header>
 
-      <Link 
-        href="/treinos/novo" 
-        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black text-lg py-5 rounded-3xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-[0_0_20px_rgba(37,99,235,0.3)]"
-      >
-        <Plus size={24} strokeWidth={3} />
-        CRIAR NOVO TREINO
-      </Link>
-
-      <section className="flex flex-col gap-4">
+      {/* LISTA DE TREINOS */}
+      <section className="flex flex-col gap-6">
         {meusTreinos.length === 0 ? (
-          <div className="bg-zinc-900/20 border-2 border-dashed border-zinc-800 rounded-3xl p-10 text-center">
-            <p className="text-zinc-500 font-medium italic">Nenhum treino encontrado.</p>
+          <div className="bg-zinc-900/20 border-2 border-dashed border-zinc-900 rounded-[2.5rem] p-12 text-center flex flex-col items-center gap-4">
+            <Activity size={40} className="text-zinc-800" />
+            <p className="text-zinc-500 font-bold uppercase text-[10px] tracking-widest italic">
+              Nenhum treino encontrado
+            </p>
           </div>
         ) : (
           meusTreinos.map((treino) => (
             <Link 
               key={treino.id} 
               href={`/treinos/${treino.id}`}
-              className="bg-zinc-900/50 border border-zinc-800/50 rounded-[2rem] p-6 flex items-center justify-between group hover:border-blue-500/50 transition-all duration-300"
+              className="relative bg-zinc-900/40 border border-zinc-800/50 rounded-[2.5rem] p-8 overflow-hidden group active:scale-[0.98] transition-all hover:border-blue-600/30"
             >
-              <div className="flex flex-col gap-2">
-                <h2 className="text-xl font-black text-zinc-100 italic uppercase tracking-tight">
-                  {treino.name}
-                </h2>
-                
-                <div className="flex items-center gap-4 text-zinc-500 text-xs font-bold uppercase tracking-widest">
-                  <div className="flex items-center gap-1.5">
-                    <Dumbbell size={14} className="text-blue-500" />
-                    <span>{treino.exercises.length} exercícios</span>
+              <div className="relative z-10">
+                <span className="bg-zinc-800/50 text-[9px] font-black px-3 py-1 rounded-full text-zinc-400 uppercase tracking-widest mb-4 inline-block">
+                  Rotina
+                </span>
+
+                <div className="flex justify-between items-end">
+                  <div className="text-left">
+                    <h2 className="text-2xl font-black italic uppercase text-zinc-100 group-hover:text-blue-500 transition-colors leading-tight">
+                      {treino.name}
+                    </h2>
+                    
+                    <div className="flex items-center gap-4 mt-3 text-zinc-500 text-[10px] font-bold uppercase tracking-widest">
+                      <div className="flex items-center gap-1.5">
+                        <Dumbbell size={14} className="text-blue-600" />
+                        <span>{treino.exercises.length} exercícios</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="w-10 h-10 rounded-full bg-zinc-800/80 flex items-center justify-center group-hover:bg-blue-600 text-zinc-500 group-hover:text-white transition-all shadow-lg">
+                    <ChevronRight size={20} />
                   </div>
                 </div>
               </div>
 
-              <div className="w-12 h-12 rounded-2xl bg-zinc-800/50 flex items-center justify-center group-hover:bg-blue-600 text-zinc-400 group-hover:text-white transition-all duration-300">
-                <ChevronRight size={24} />
+              {/* Ícone de Fundo Decorativo */}
+              <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
+                <Dumbbell size={120} strokeWidth={4} />
               </div>
             </Link>
           ))
         )}
       </section>
+
     </main>
   );
 }

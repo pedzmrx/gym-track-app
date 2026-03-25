@@ -2,117 +2,170 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Save, Trash2, Loader2 } from "lucide-react";
-import { useSession } from "next-auth/react"; 
-import { salvarTreinoAction } from "./actions"; 
+import { ChevronLeft, Plus, Save, Trash2, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { createWorkout } from "../../actions";
+import { useSession } from "next-auth/react";
 
-export default function NovoTreino() {
+interface ExercicioInput {
+  nome: string;
+  series: number;
+  repeticoes: string;
+}
+
+export default function NovoTreinoPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = useSession(); 
   
   const [nomeTreino, setNomeTreino] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [exercicios, setExercicios] = useState([
-    { id: Date.now(), nome: "", series: "", repeticoes: "" }
+  const [isSalvando, setIsSalvando] = useState(false);
+  const [exercicios, setExercicios] = useState<ExercicioInput[]>([
+    { nome: "", series: 3, repeticoes: "12" }
   ]);
 
   const adicionarExercicio = () => {
-    setExercicios([...exercicios, { id: Date.now(), nome: "", series: "", repeticoes: "" }]);
+    setExercicios([...exercicios, { nome: "", series: 3, repeticoes: "12" }]);
   };
 
-  const removerExercicio = (idParaRemover: number) => {
-    if (exercicios.length > 1) {
-      setExercicios(exercicios.filter(ex => ex.id !== idParaRemover));
-    }
+  const removerExercicio = (index: number) => {
+    if (exercicios.length === 1) return; 
+    const novos = exercicios.filter((_, i) => i !== index);
+    setExercicios(novos);
   };
 
-  const atualizarExercicio = (id: number, campo: string, valor: string) => {
-    setExercicios(exercicios.map(ex => (ex.id === id ? { ...ex, [campo]: valor } : ex)));
+  const atualizarExercicio = (index: number, campo: keyof ExercicioInput, valor: string | number) => {
+    const novos = [...exercicios];
+    novos[index] = { ...novos[index], [campo]: valor } as ExercicioInput;
+    setExercicios(novos);
   };
 
-  // FUNÇÃO QUE CONECTA COM O BANCO
- const handleSalvar = async () => {
-    if (!nomeTreino) return alert("Dê um nome ao seu treino!");
+  const salvarTreino = async () => {
     if (!session?.user) return alert("Você precisa estar logado!");
+    if (!nomeTreino) return alert("Dê um nome ao seu treino!");
+    if (exercicios.some(ex => !ex.nome)) return alert("Preencha o nome de todos os exercícios!");
 
-    setLoading(true);
+    setIsSalvando(true);
+    
     try {
-      const userId = (session?.user as any)?.id;
-      
-      const result = await salvarTreinoAction(nomeTreino, exercicios, userId);
+      const result = await createWorkout(
+        (session.user as any).id, 
+        nomeTreino, 
+        exercicios
+      );
 
       if (result.success) {
-        router.refresh(); 
-        
         router.push("/treinos");
-        
+        router.refresh(); 
       } else {
-        alert("Erro ao salvar o treino: " + result.error);
+        alert("Erro ao salvar treino.");
       }
-    } catch (error) {
-      console.error(error);
-      alert("Erro crítico ao salvar.");
+    } catch (err) {
+      alert("Erro de conexão.");
     } finally {
-      setLoading(false);
+      setIsSalvando(false);
     }
   };
 
   return (
-    <main className="min-h-[100dvh] max-w-md mx-auto p-6 flex flex-col gap-6 pb-32">
-      <header className="flex items-center gap-4 mt-4">
-        <button onClick={() => router.back()} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
-          <ArrowLeft size={24} />
-        </button>
-        <h1 className="text-2xl font-black text-white tracking-tight">Criar Treino</h1>
+    <main className="min-h-screen bg-black text-white p-6 pb-44 max-w-md mx-auto relative">
+      
+      {/* Header */}
+      <header className="mt-4 mb-10 flex items-center justify-between">
+        <Link href="/treinos" className="w-10 h-10 bg-zinc-900 rounded-xl flex items-center justify-center border border-zinc-800 active:scale-90 transition-all">
+          <ChevronLeft size={20} />
+        </Link>
+        <h1 className="text-xl font-black italic uppercase tracking-tighter">Novo Treino</h1>
+        <div className="w-10" />
       </header>
 
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-bold text-zinc-400 uppercase tracking-widest pl-1">Nome da Rotina</label>
-        <input
-          type="text"
-          placeholder="Ex: Treino A - Peito"
+      {/* Nome do Treino */}
+      <section className="mb-10">
+        <label className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 mb-3 block px-1">Nome do Treino</label>
+        <input 
+          type="text" 
+          placeholder="EX: TREINO A - PEITO"
           value={nomeTreino}
-          onChange={(e) => setNomeTreino(e.target.value)}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-white focus:border-blue-500 outline-none transition-all"
+          onChange={(e) => setNomeTreino(e.target.value.toUpperCase())}
+          className="w-full bg-zinc-900/50 border border-zinc-800 rounded-2xl p-5 text-lg font-black italic uppercase placeholder:text-zinc-700 focus:border-blue-600 focus:outline-none transition-all"
         />
-      </div>
+      </section>
 
-      {/* Lista Exercícios */}
-      <div className="flex flex-col gap-4">
+      {/* Exercícios */}
+      <section className="space-y-6 mb-10">
+        <div className="flex justify-between items-center px-1">
+          <label className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Exercícios</label>
+          <span className="text-[10px] font-black text-blue-500 bg-blue-500/10 px-2 py-1 rounded-lg uppercase">{exercicios.length} total</span>
+        </div>
+
         {exercicios.map((ex, index) => (
-          <div key={ex.id} className="bg-zinc-900/40 border border-zinc-800/50 rounded-3xl p-4 flex flex-col gap-3 relative">
-            <button onClick={() => removerExercicio(ex.id)} className="absolute top-4 right-4 text-zinc-600 hover:text-red-500"><Trash2 size={20} /></button>
-            <span className="text-xs font-black text-blue-500 bg-blue-500/10 w-fit px-2 py-1 rounded-lg">#{index + 1}</span>
-            <input
-              type="text"
-              placeholder="Qual o exercício?"
-              value={ex.nome}
-              onChange={(e) => atualizarExercicio(ex.id, "nome", e.target.value)}
-              className="w-full bg-transparent border-b border-zinc-800 pb-2 text-lg font-bold text-white focus:border-blue-500 outline-none"
-            />
-            <div className="flex gap-4">
-              <input type="text" placeholder="Séries" value={ex.series} onChange={(e) => atualizarExercicio(ex.id, "series", e.target.value)} className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-center text-white" />
-              <input type="text" placeholder="Reps" value={ex.repeticoes} onChange={(e) => atualizarExercicio(ex.id, "repeticoes", e.target.value)} className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-center text-white" />
+          <div key={index} className="bg-zinc-900/30 border border-zinc-800 rounded-[2rem] p-6 relative group animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <button 
+              onClick={() => removerExercicio(index)}
+              className="absolute -top-2 -right-2 w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500 hover:text-red-500 border border-zinc-700 transition-colors"
+            >
+              <Trash2 size={14} />
+            </button>
+
+            <div className="space-y-4">
+              <input 
+                type="text" 
+                placeholder="NOME DO EXERCÍCIO"
+                value={ex.nome}
+                onChange={(e) => atualizarExercicio(index, "nome", e.target.value.toUpperCase())}
+                className="w-full bg-transparent border-b border-zinc-800 py-2 font-black italic uppercase placeholder:text-zinc-800 focus:border-blue-600 focus:outline-none transition-all"
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-zinc-950/50 p-3 rounded-xl border border-zinc-800/50 flex flex-col gap-1">
+                  <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">Séries</span>
+                  <input 
+                    type="number" 
+                    value={ex.series}
+                    onChange={(e) => atualizarExercicio(index, "series", parseInt(e.target.value) || 0)}
+                    className="bg-transparent font-black text-blue-500 focus:outline-none"
+                  />
+                </div>
+                <div className="bg-zinc-950/50 p-3 rounded-xl border border-zinc-800/50 flex flex-col gap-1">
+                  <span className="text-[8px] font-black text-zinc-600 uppercase tracking-widest">Repetições</span>
+                  <input 
+                    type="text" 
+                    value={ex.repeticoes}
+                    onChange={(e) => atualizarExercicio(index, "repeticoes", e.target.value)}
+                    className="bg-transparent font-black text-blue-500 focus:outline-none"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         ))}
 
-        <button onClick={adicionarExercicio} className="w-full border-2 border-dashed border-zinc-800 text-zinc-400 font-bold py-4 rounded-3xl flex items-center justify-center gap-2">
-          <Plus size={20} strokeWidth={3} /> Adicionar Exercício
+        <button 
+          onClick={adicionarExercicio}
+          className="w-full border-2 border-dashed border-zinc-800 rounded-[2rem] py-6 flex items-center justify-center gap-2 text-zinc-500 font-black italic uppercase text-sm hover:border-zinc-600 hover:text-zinc-400 transition-all active:scale-95"
+        >
+          <Plus size={18} strokeWidth={3} />
+          Adicionar Exercício
+        </button>
+      </section>
+
+      {/* Botão Salvar */}
+      <div className="fixed bottom-28 left-0 right-0 px-6 max-w-md mx-auto">
+        <button 
+          onClick={salvarTreino}
+          disabled={isSalvando}
+          className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-black py-5 rounded-[2rem] shadow-[0_10px_30px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3 transition-all active:scale-95 uppercase italic tracking-tighter"
+        >
+          {isSalvando ? (
+            <Loader2 className="animate-spin" size={20} />
+          ) : (
+            <>
+              <Save size={20} strokeWidth={3} />
+              Salvar Treino Completo
+            </>
+          )}
         </button>
       </div>
 
-      {/* BOTÃO SALVAR */}
-      <div className="fixed bottom-24 left-0 w-full px-6 flex justify-center">
-        <button 
-          disabled={loading}
-          onClick={handleSalvar}
-          className="w-full max-w-md bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg py-4 rounded-2xl flex items-center justify-center gap-2 shadow-xl shadow-blue-600/30 disabled:opacity-50"
-        >
-          {loading ? <Loader2 className="animate-spin" /> : <Save size={24} />}
-          {loading ? "Salvando..." : "Salvar Treino"}
-        </button>
-      </div>
     </main>
   );
 }

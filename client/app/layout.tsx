@@ -10,7 +10,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#09090b",
+  themeColor: "#000000",
 };
 
 export const metadata: Metadata = {
@@ -31,10 +31,10 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions); 
 
   return (
-    <html lang="pt-br">
-      <body className="bg-zinc-950 text-zinc-50 min-h-[100dvh] antialiased overscroll-none selection:bg-blue-500/30">
+    <html lang="pt-br" className="dark"> 
+      <body className="bg-black text-white min-h-[100dvh] antialiased overscroll-none selection:bg-blue-500/30">
         <AuthProvider>
-          <main className="relative h-full pb-24">
+          <main className="relative min-h-screen">
             {children}
           </main>
           
