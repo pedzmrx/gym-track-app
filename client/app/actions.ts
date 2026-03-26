@@ -12,6 +12,63 @@ const adapter = new PrismaPg(pool as any);
 const prisma = globalForPrisma.prisma || new PrismaClient({ adapter });
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
+export async function registrarTreinoCompleto(workoutId: string, userId: string, nomeTreino: string, logTreino: any[]) {
+  try {
+    await prisma.workoutLog.create({
+      data: {
+        workoutId,
+        userId,
+        workoutName: nomeTreino,
+        entries: {
+          create: logTreino.map((item) => ({
+            exerciseId: item.exerciseId,
+            setNumber: item.setNumber,
+            weight: String(item.peso),
+            reps: String(item.reps),
+          })),
+        },
+      },
+    });
+
+    const todosTreinos = await prisma.workout.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    const indexAtual = todosTreinos.findIndex(t => t.id === workoutId);
+    const proximoTreino = todosTreinos[indexAtual + 1] || todosTreinos[0];
+
+    revalidatePath("/treinos");
+    revalidatePath("/dashboard"); 
+    
+    return { 
+      success: true, 
+      proximoTreino: proximoTreino ? proximoTreino.name : "Novo Treino" 
+    };
+  } catch (error) {
+    console.error("Erro ao registrar log completo:", error);
+    return { success: false };
+  }
+}
+
+
+export async function buscarExerciciosAction(workoutId: string) {
+  try {
+    const workout = await prisma.workout.findUnique({
+      where: { id: workoutId },
+      include: { exercises: true }
+    });
+    
+    return { 
+      success: true, 
+      exercicios: workout?.exercises || [], 
+      nomeTreino: workout?.name || "" 
+    };
+  } catch (error) {
+    console.error("Erro ao buscar exercícios para execução:", error);
+    return { success: false };
+  }
+}
 
 export async function getDashboardStats(userId: string) {
   try {
@@ -41,31 +98,22 @@ export async function getDashboardStats(userId: string) {
   }
 }
 
-
 export async function getUserTreinos(userId: string) {
   try {
     const treinos = await prisma.workout.findMany({
-      where: {
-        userId: userId,
-      },
+      where: { userId: userId },
       include: {
         exercises: true,
-        _count: {
-          select: { exercises: true }
-        }
+        _count: { select: { exercises: true } }
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' }
     });
-
     return treinos;
   } catch (error) {
     console.error("Erro ao buscar treinos:", error);
     return [];
   }
 }
-
 
 export async function createWorkout(userId: string, nome: string, exercicios: { nome: string, series: number, repeticoes: string }[]) {
   try {
@@ -91,12 +139,9 @@ export async function createWorkout(userId: string, nome: string, exercicios: { 
   }
 }
 
-
 export async function deleteExercise(exerciseId: string) {
   try {
-    await prisma.exercise.delete({
-      where: { id: exerciseId }
-    });
+    await prisma.exercise.delete({ where: { id: exerciseId } });
     revalidatePath("/treinos");
     return { success: true };
   } catch (error) {
@@ -105,16 +150,10 @@ export async function deleteExercise(exerciseId: string) {
   }
 }
 
-
 export async function deleteWorkout(workoutId: string) {
   try {
-    await prisma.exercise.deleteMany({
-      where: { workoutId: workoutId }
-    });
     
-    await prisma.workout.delete({
-      where: { id: workoutId }
-    });
+    await prisma.workout.delete({ where: { id: workoutId } });
 
     revalidatePath("/treinos");
     return { success: true };

@@ -25,21 +25,19 @@ model User {
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@unique([provider, providerAccountId])
 }
 
@@ -52,31 +50,43 @@ model Session {
 }
 
 model Workout {
-  id        String     @id @default(cuid())
-  name      String     
+  id        String       @id @default(cuid())
+  name      String       
   userId    String
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   exercises Exercise[]
   logs      WorkoutLog[] 
-  createdAt DateTime   @default(now())
-  
+  createdAt DateTime     @default(now())
 }
 
 model Exercise {
-  id        String  @id @default(cuid())
-  name      String  
-  sets      String  
-  reps      String  
+  id        String     @id @default(cuid())
+  name      String     
+  sets      String     
+  reps      String     
   workoutId String
-  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  workout   Workout    @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  logEntries LogEntry[]
 }
 
 model WorkoutLog {
-  id          String   @id @default(cuid())
+  id          String     @id @default(cuid())
   workoutId   String
   workoutName String
   userId      String
-  completedAt DateTime @default(now())
-  workout     Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completedAt DateTime   @default(now())
+  workout     Workout    @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entries     LogEntry[]
+}
+
+model LogEntry {
+  id           String     @id @default(cuid())
+  workoutLogId String
+  exerciseId   String
+  setNumber    Int
+  weight       String
+  reps         String
+  workoutLog   WorkoutLog @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+  exercise     Exercise   @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
 }
