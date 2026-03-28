@@ -51,21 +51,38 @@ export async function registrarTreinoCompleto(workoutId: string, userId: string,
   }
 }
 
-
 export async function buscarExerciciosAction(workoutId: string) {
   try {
     const workout = await prisma.workout.findUnique({
       where: { id: workoutId },
-      include: { exercises: true }
+      include: { 
+        exercises: {
+          include: {
+            logEntries: {
+              orderBy: { workoutLog: { completedAt: 'desc' } },
+              take: 1 
+            }
+          }
+        } 
+      }
     });
-    
+
+    const exerciciosComCarga = workout?.exercises.map(ex => ({
+      id: ex.id,
+      name: ex.name,
+      sets: ex.sets,
+      reps: ex.reps,
+      ultimoPeso: ex.logEntries[0]?.weight || "", 
+      ultimasReps: ex.logEntries[0]?.reps || ex.reps 
+    })) || [];
+
     return { 
       success: true, 
-      exercicios: workout?.exercises || [], 
+      exercicios: exerciciosComCarga, 
       nomeTreino: workout?.name || "" 
     };
   } catch (error) {
-    console.error("Erro ao buscar exercícios para execução:", error);
+    console.error("Erro ao buscar exercícios com carga:", error);
     return { success: false };
   }
 }
@@ -159,6 +176,91 @@ export async function deleteWorkout(workoutId: string) {
     return { success: true };
   } catch (error) {
     console.error("Erro ao excluir treino:", error);
+    return { success: false };
+  }
+}
+
+export async function getVolumeStats(userId: string) {
+  try {
+    const seteDiasAtras = new Date();
+    seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+
+    const logs = await prisma.workoutLog.findMany({
+      where: {
+        userId,
+        completedAt: { gte: seteDiasAtras }
+      },
+      include: { entries: true },
+      orderBy: { completedAt: 'asc' }
+    }); 
+
+    const stats = logs.map(log => {
+      const volumeTotal = log.entries.reduce((acc, entry) => {
+        return acc + (Number(entry.weight || 0) * Number(entry.reps || 0));
+      }, 0);
+
+      return {
+        dia: log.completedAt.toLocaleDateString('pt-BR', { weekday: 'short' }),
+        volume: volumeTotal
+      };
+    });
+
+    return { success: true, stats };
+  } catch (error) {
+    return { success: false, stats: [] };
+  }
+}
+
+export async function getLogDetalhes(logId: string) {
+  try {
+    const log = await prisma.workoutLog.findUnique({
+      where: { id: logId },
+      include: {
+        entries: {
+          include: { exercise: true }
+        }
+      }
+    });
+    return { success: true, log };
+  } catch (error) {
+    console.error("Erro ao buscar detalhes do log:", error);
+    return { success: false };
+  }
+}
+
+export async function getPersonalRecords(userId: string) {
+  try {
+    const recordePeso = await prisma.logEntry.findFirst({
+      where: {
+        workoutLog: { userId: userId }
+      },
+      orderBy: { weight: 'desc' },
+      include: { exercise: true }
+    });
+
+    const seteDiasAtras = new Date();
+    seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+
+    const logsSemana = await prisma.workoutLog.findMany({
+      where: {
+        userId,
+        completedAt: { gte: seteDiasAtras }
+      },
+      include: { entries: true }
+    });
+
+    const volumeTotalSemana = logsSemana.reduce((acc, log) => {
+      return acc + log.entries.reduce((sum, entry) => sum + (Number(entry.weight) * Number(entry.reps)), 0);
+    }, 0);
+
+    return { 
+      success: true, 
+      maiorPeso: recordePeso?.weight || "0",
+      nomeExercicio: recordePeso?.exercise.name || "Nenhum",
+      volumeTotal: volumeTotalSemana
+    };
+  } catch (error) {
+    console.error("Erro ao buscar recordes:", error);
     return { success: false };
   }
 }

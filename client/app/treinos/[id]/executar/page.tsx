@@ -10,8 +10,8 @@ function ExercicioCard({ ex, index, onSerieConcluida }: { ex: any; index: number
   const numSets = parseInt(ex.sets) || 1;
   const [aberto, setAberto] = useState(false);
   const [serieAtual, setSerieAtual] = useState(1);
-  const [peso, setPeso] = useState("");
-  const [repsReais, setRepsReais] = useState(ex.reps);
+  const [peso, setPeso] = useState(ex.ultimoPeso || "");
+  const [repsReais, setRepsReais] = useState(ex.ultimasReps || ex.reps);
   const [concluido, setConcluido] = useState(false);
 
   const handleConfirmarSerie = () => {

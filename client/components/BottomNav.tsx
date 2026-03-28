@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation"; 
-import { Home, Calendar, Dumbbell, User } from "lucide-react";
+import { Home, Calendar, TrendingUp, User } from "lucide-react";
 
 export default function BottomNav() {
   const pathname = usePathname();
@@ -23,7 +23,7 @@ export default function BottomNav() {
           <span className={`text-[10px] font-black uppercase tracking-tighter ${isActive('/') ? 'opacity-100' : 'opacity-50'}`}>Início</span>
         </Link>
         
-        {/* Meus Treinos (Listagem) */}
+        {/* Meus Treinos */}
         <Link 
           href="/treinos" 
           className={`flex flex-col items-center gap-1 transition-all ${isActive('/treinos') ? 'text-blue-500 scale-110' : 'text-zinc-600 hover:text-zinc-400'}`}
@@ -32,13 +32,13 @@ export default function BottomNav() {
           <span className={`text-[10px] font-black uppercase tracking-tighter ${isActive('/treinos') ? 'opacity-100' : 'opacity-50'}`}>Treinos</span>
         </Link>
 
-        {/* Exercícios (Biblioteca) */}
+        {/* Dashboard */}
         <Link 
-          href="/exercicios" 
-          className={`flex flex-col items-center gap-1 transition-all ${isActive('/exercicios') ? 'text-blue-500 scale-110' : 'text-zinc-600 hover:text-zinc-400'}`}
+          href="/dashboard" 
+          className={`flex flex-col items-center gap-1 transition-all ${isActive('/dashboard') ? 'text-blue-500 scale-110' : 'text-zinc-600 hover:text-zinc-400'}`}
         >
-          <Dumbbell size={24} strokeWidth={isActive('/exercicios') ? 2.5 : 2} />
-          <span className={`text-[10px] font-black uppercase tracking-tighter ${isActive('/exercicios') ? 'opacity-100' : 'opacity-50'}`}>Exercícios</span>
+          <TrendingUp size={24} strokeWidth={isActive('/dashboard') ? 2.5 : 2} />
+          <span className={`text-[10px] font-black uppercase tracking-tighter ${isActive('/dashboard') ? 'opacity-100' : 'opacity-50'}`}>Evolução</span>
         </Link>
 
         {/* Perfil */}
