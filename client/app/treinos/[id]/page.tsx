@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { ChevronLeft, Play, Dumbbell, Clock, Trash2, MoreVertical, Loader2 } from "lucide-react";
+import { ChevronLeft, Play, Dumbbell, Clock, Trash2, MoreVertical, Loader2, Pencil } from "lucide-react";
 import Link from "next/link";
 import { deleteWorkout, deleteExercise } from "../../actions";
 
@@ -101,36 +101,51 @@ export default function DetalhesTreinoPage() {
             onClick={() => setMenuAberto(!menuAberto)}
             className="w-10 h-10 bg-zinc-900 rounded-xl flex items-center justify-center border border-zinc-800 active:scale-95 transition-all"
           >
-            <MoreVertical size={20} className="text-zinc-500" />
+            <MoreVertical size={20} className={menuAberto ? "text-white" : "text-zinc-500"} />
           </button>
 
           {menuAberto && (
-            <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
-              <button 
-                onClick={handleExcluirTreino}
-                className="w-full flex items-center gap-3 px-4 py-4 text-red-500 hover:bg-red-500/10 font-black italic uppercase text-[10px] transition-all"
-              >
-                <Trash2 size={14} />
-                Excluir Treino
-              </button>
-            </div>
+            <>
+              {/* Overlay para fechar ao clicar fora */}
+              <div className="fixed inset-0 z-40" onClick={() => setMenuAberto(false)} />
+              
+              <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+                {/* OPÇÃO EDITAR */}
+                <Link 
+                  href={`/treinos/${treino.id}/editar`}
+                  className="w-full flex items-center gap-3 px-4 py-4 text-zinc-300 hover:bg-zinc-800 border-b border-zinc-800 font-black italic uppercase text-[10px] transition-all"
+                >
+                  <Pencil size={14} className="text-blue-500" />
+                  Editar Treino
+                </Link>
+
+                {/* OPÇÃO EXCLUIR */}
+                <button 
+                  onClick={handleExcluirTreino}
+                  className="w-full flex items-center gap-3 px-4 py-4 text-red-500 hover:bg-red-500/10 font-black italic uppercase text-[10px] transition-all text-left"
+                >
+                  <Trash2 size={14} />
+                  Excluir Treino
+                </button>
+              </div>
+            </>
           )}
         </div>
       </header>
 
       {/* Info Section */}
-      <section className="mb-10">
+      <section className="mb-10 px-1">
         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500 block mb-2">Treino Selecionado</span>
         <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none mb-4">
           {treino.name}
         </h1>
         
         <div className="flex gap-4">
-          <div className="flex items-center gap-2 bg-zinc-900/50 px-3 py-2 rounded-xl border border-zinc-800/50">
+          <div className="flex items-center gap-2 bg-zinc-900/50 px-3 py-2 rounded-xl border border-zinc-800/50 shadow-inner">
             <Dumbbell size={14} className="text-zinc-500" />
             <span className="text-xs font-bold text-zinc-300">{treino.exercises?.length || 0} Exercícios</span>
           </div>
-          <div className="flex items-center gap-2 bg-zinc-900/50 px-3 py-2 rounded-xl border border-zinc-800/50">
+          <div className="flex items-center gap-2 bg-zinc-900/50 px-3 py-2 rounded-xl border border-zinc-800/50 shadow-inner">
             <Clock size={14} className="text-zinc-500" />
             <span className="text-xs font-bold text-zinc-300">~45 min</span>
           </div>
@@ -139,7 +154,7 @@ export default function DetalhesTreinoPage() {
 
       {/* Exercises List */}
       <section className="space-y-4">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-4">Ordem de Execução</h3>
+        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-4 px-1">Ordem de Execução</h3>
         
         {treino.exercises.length === 0 ? (
           <div className="p-10 border-2 border-dashed border-zinc-900 rounded-[2.5rem] text-center">
@@ -149,7 +164,7 @@ export default function DetalhesTreinoPage() {
           treino.exercises.map((ex, index) => (
             <div 
               key={ex.id} 
-              className="bg-zinc-900/30 border border-zinc-800/50 rounded-[2.5rem] p-6 flex items-center justify-between group transition-all"
+              className="bg-zinc-900/30 border border-zinc-800/50 rounded-[2.5rem] p-6 flex items-center justify-between group transition-all hover:border-zinc-700"
             >
               <div className="flex items-center gap-5">
                 <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-lg font-black italic text-zinc-600 group-hover:text-blue-500 transition-colors">
@@ -160,9 +175,9 @@ export default function DetalhesTreinoPage() {
                     {ex.name}
                   </h4>
                   <div className="flex gap-3 mt-1 items-center">
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{ex.sets} Séries</span>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{ex.sets || "0"} Séries</span>
                     <span className="text-zinc-800 text-[8px]">●</span>
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{ex.reps} Reps</span>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{ex.reps || "0"} Reps</span>
                   </div>
                 </div>
               </div>
@@ -178,15 +193,16 @@ export default function DetalhesTreinoPage() {
         )}
       </section>
 
+      {/* Botão de Iniciar Fixo */}
       <div className="fixed bottom-32 left-0 right-0 px-6 max-w-md mx-auto z-50">
-  <Link 
-    href={`/treinos/${treino.id}/executar`}
-    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_15px_30px_rgba(37,99,235,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase italic text-lg"
-  >
-    <Play size={20} fill="white" />
-    Iniciar Treino
-  </Link>
-</div>
+        <Link 
+          href={`/treinos/${treino.id}/executar`}
+          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_15px_30px_rgba(37,99,235,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase italic text-lg"
+        >
+          <Play size={20} fill="white" />
+          Iniciar Treino
+        </Link>
+      </div>
     </div>
   );
 }

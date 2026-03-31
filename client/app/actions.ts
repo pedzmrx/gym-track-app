@@ -92,26 +92,34 @@ export async function getDashboardStats(userId: string) {
     const logsRecentas = await prisma.workoutLog.findMany({
       where: {
         userId: userId,
-        completedAt: {
-          gte: new Date(new Date().setDate(new Date().getDate() - 7)),
-        },
-      },
-      orderBy: { completedAt: "desc" },
-    });
-
-    const ultimosLogs = await prisma.workoutLog.findMany({
-      where: { userId: userId },
-      take: 5,
-      orderBy: { completedAt: "desc" },
-      include: {
-        workout: true,
+        completedAt: { gte: new Date(new Date().setDate(new Date().getDate() - 7)) },
       },
     });
 
-    return { logsRecentas, ultimosLogs };
+    const treinos = await prisma.workout.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+      include: { _count: { select: { exercises: true } } }
+    });
+
+    const ultimoLog = await prisma.workoutLog.findFirst({
+      where: { userId },
+      orderBy: { completedAt: 'desc' },
+    });
+
+    let proximoTreino = treinos[0] || null;
+    if (ultimoLog && treinos.length > 0) {
+      const indexUltimo = treinos.findIndex(t => t.id === ultimoLog.workoutId);
+      proximoTreino = treinos[(indexUltimo + 1) % treinos.length];
+    }
+
+    return { 
+      logsRecentas, 
+      proximoTreino, 
+      quantidadeTreinos: treinos.length 
+    };
   } catch (error) {
-    console.error("Erro ao buscar stats:", error);
-    return { logsRecentas: [], ultimosLogs: [] };
+    return { logsRecentas: [], proximoTreino: null, quantidadeTreinos: 0 };
   }
 }
 
@@ -261,6 +269,82 @@ export async function getPersonalRecords(userId: string) {
     };
   } catch (error) {
     console.error("Erro ao buscar recordes:", error);
+    return { success: false };
+  }
+}
+
+export async function getHomeData(userId: string) {
+  try {
+    const treinos = await prisma.workout.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const ultimoLog = await prisma.workoutLog.findFirst({
+      where: { userId },
+      orderBy: { completedAt: 'desc' },
+    });
+
+    let proximoTreino = treinos[0]; 
+
+    if (ultimoLog && treinos.length > 0) {
+      const indexUltimo = treinos.findIndex(t => t.id === ultimoLog.workoutId);
+      proximoTreino = treinos[(indexUltimo + 1) % treinos.length];
+    }
+
+    const seteDiasAtras = new Date();
+    seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+    const treinosNaSemana = await prisma.workoutLog.count({
+      where: { userId, completedAt: { gte: seteDiasAtras } }
+    });
+
+    return { 
+      success: true, 
+      proximoTreino, 
+      treinosNaSemana 
+    };
+  } catch (error) {
+    console.error("Erro ao buscar dados da Home:", error);
+    return { success: false };
+  }
+}
+
+export async function updateWorkout(workoutId: string, name: string, exerciseNames: string[]) {
+  try {
+    const exerciseConnections = await Promise.all(
+      exerciseNames.map(async (exName) => {
+        let exercise = await prisma.exercise.findFirst({
+          where: { name: exName }
+        });
+
+        if (!exercise) {
+          exercise = await prisma.exercise.create({
+            data: { 
+              name: exName,
+              sets: "0",           
+              reps: "0",          
+              workoutId: workoutId 
+            }
+          });
+        }
+
+        return { id: exercise.id };
+      })
+    );
+
+    await prisma.workout.update({
+      where: { id: workoutId },
+      data: {
+        name: name,
+        exercises: {
+          set: exerciseConnections 
+        }
+      }
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("ERRO_AO_ATUALIZAR_TREINO:", error);
     return { success: false };
   }
 }
