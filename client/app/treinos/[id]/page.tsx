@@ -86,8 +86,8 @@ export default function DetalhesTreinoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 pb-44 max-w-md mx-auto relative">
-      {/* Header */}
+    <div className="min-h-screen bg-black text-white p-6 pb-[30rem] max-w-md mx-auto relative font-sans">
+      
       <header className="mt-4 mb-10 flex items-center justify-between relative">
         <button 
           onClick={() => router.push("/treinos")} 
@@ -106,11 +106,8 @@ export default function DetalhesTreinoPage() {
 
           {menuAberto && (
             <>
-              {/* Overlay para fechar ao clicar fora */}
               <div className="fixed inset-0 z-40" onClick={() => setMenuAberto(false)} />
-              
               <div className="absolute right-0 mt-2 w-48 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
-                {/* OPÇÃO EDITAR */}
                 <Link 
                   href={`/treinos/${treino.id}/editar`}
                   className="w-full flex items-center gap-3 px-4 py-4 text-zinc-300 hover:bg-zinc-800 border-b border-zinc-800 font-black italic uppercase text-[10px] transition-all"
@@ -119,7 +116,6 @@ export default function DetalhesTreinoPage() {
                   Editar Treino
                 </Link>
 
-                {/* OPÇÃO EXCLUIR */}
                 <button 
                   onClick={handleExcluirTreino}
                   className="w-full flex items-center gap-3 px-4 py-4 text-red-500 hover:bg-red-500/10 font-black italic uppercase text-[10px] transition-all text-left"
@@ -133,7 +129,6 @@ export default function DetalhesTreinoPage() {
         </div>
       </header>
 
-      {/* Info Section */}
       <section className="mb-10 px-1">
         <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-500 block mb-2">Treino Selecionado</span>
         <h1 className="text-4xl font-black italic uppercase tracking-tighter leading-none mb-4">
@@ -152,7 +147,6 @@ export default function DetalhesTreinoPage() {
         </div>
       </section>
 
-      {/* Exercises List */}
       <section className="space-y-4">
         <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-4 px-1">Ordem de Execução</h3>
         
@@ -193,15 +187,18 @@ export default function DetalhesTreinoPage() {
         )}
       </section>
 
-      {/* Botão de Iniciar Fixo */}
-      <div className="fixed bottom-32 left-0 right-0 px-6 max-w-md mx-auto z-50">
-        <Link 
-          href={`/treinos/${treino.id}/executar`}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_15px_30px_rgba(37,99,235,0.4)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase italic text-lg"
-        >
-          <Play size={20} fill="white" />
-          Iniciar Treino
-        </Link>
+      <div className="fixed bottom-32 left-0 right-0 px-6 z-50">
+        <div className="max-w-md mx-auto relative">
+          <div className="absolute -inset-x-6 -top-24 h-44 bg-gradient-to-t from-black via-black/90 to-transparent -z-10 pointer-events-none" />
+          
+          <Link 
+            href={`/treinos/${treino.id}/executar`}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_15px_40px_rgba(37,99,235,0.5)] flex items-center justify-center gap-4 transition-all active:scale-95 uppercase italic text-lg"
+          >
+            <Play size={20} fill="white" />
+            Iniciar Treino
+          </Link>
+        </div>
       </div>
     </div>
   );
