@@ -1,16 +1,7 @@
 "use server"
 
-import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool as any);
-
-const prisma = globalForPrisma.prisma || new PrismaClient({ adapter });
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 
 export async function registrarTreinoCompleto(workoutId: string, userId: string, nomeTreino: string, logTreino: any[]) {
