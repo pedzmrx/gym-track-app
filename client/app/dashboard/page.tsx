@@ -40,27 +40,28 @@ export default function EvolucaoPage() {
   }, [session]);
 
   const gerarCalendarioMensal = () => {
-    const hoje = new Date();
-    const ano = hoje.getFullYear();
-    const mes = hoje.getMonth();
-    const primeiroDia = new Date(ano, mes, 1);
-    const diaSemanaInicio = primeiroDia.getDay();
-    const dias = [];
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = hoje.getMonth();
+  
+  const primeiroDia = new Date(ano, mes, 1);
+  const diaSemanaInicio = primeiroDia.getDay();
+  const dias = [];
 
-    for (let i = 0; i < diaSemanaInicio; i++) {
-      dias.push({ day: '', dateStr: '', currentMonth: false });
-    }
+  for (let i = 0; i < diaSemanaInicio; i++) {
+    dias.push({ day: '', dateStr: '', currentMonth: false });
+  }
 
-    const ultimoDia = new Date(ano, mes + 1, 0).getDate();
-    for (let i = 1; i <= ultimoDia; i++) {
-      const dia = String(i).padStart(2, '0');
-      const mesString = String(mes + 1).padStart(2, '0');
-      const dataFormatada = `${ano}-${mesString}-${dia}`;
-      
-      dias.push({ day: i, dateStr: dataFormatada, currentMonth: true });
-    }
-    return dias;
-  };
+  const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+  for (let i = 1; i <= ultimoDia; i++) {
+    const diaStr = String(i).padStart(2, '0');
+    const mesStr = String(mes + 1).padStart(2, '0');
+    const dataFormatada = `${ano}-${mesStr}-${diaStr}`;
+    
+    dias.push({ day: i, dateStr: dataFormatada, currentMonth: true });
+  }
+  return dias;
+};
 
   const gerarHeatmapAnual = () => {
     const hoje = new Date();

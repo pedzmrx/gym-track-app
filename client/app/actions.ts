@@ -15,15 +15,12 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export async function registrarTreinoCompleto(workoutId: string, userId: string, nomeTreino: string, logTreino: any[]) {
   try {
-    
-    const dataLocal = new Date();
-    
     await prisma.workoutLog.create({
       data: {
         workoutId,
         userId,
         workoutName: nomeTreino,
-        completedAt: dataLocal, 
+        completedAt: new Date(),
         entries: {
           create: logTreino.map((item) => ({
             exerciseId: item.exerciseId,
@@ -35,13 +32,25 @@ export async function registrarTreinoCompleto(workoutId: string, userId: string,
       },
     });
 
+    const treinos = await prisma.workout.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    let proximoTreinoNome = "Descanso ou Novo Treino";
+
+    if (treinos.length > 0) {
+      const indexAtual = treinos.findIndex(t => t.id === workoutId);
+      const proximo = treinos[(indexAtual + 1) % treinos.length];
+      proximoTreinoNome = proximo.name;
+    }
+
     revalidatePath("/dashboard");
-    revalidatePath("/treinos");
-    revalidatePath("/evolucao");
-    
-    return { success: true };
+    revalidatePath("/");
+
+    return { success: true, proximoTreinoNome };
   } catch (error) {
-    console.error("Erro ao registrar log completo:", error);
+    console.error("Erro ao registrar treino:", error);
     return { success: false };
   }
 }
@@ -200,7 +209,6 @@ export async function getHomeData(userId: string) {
       }
     }
 
-    // Dados de consistência simplificados para a Home
     const seteDiasAtras = new Date();
     seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
     const treinosNaSemana = await prisma.workoutLog.count({

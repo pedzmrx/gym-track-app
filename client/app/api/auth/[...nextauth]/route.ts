@@ -29,6 +29,11 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
   ],
+  pages: {
+    signIn: '/login', 
+    signOut: '/login',
+    error: '/login', 
+  },
   callbacks: {
     async session({ session, user }) {
       if (session.user) {

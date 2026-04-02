@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
-import { X, Trophy, Loader2, Weight, Hash, CheckCircle, ChevronDown, ChevronUp, Clock } from "lucide-react";
+import { X, Trophy, Loader2, CheckCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { registrarTreinoCompleto, buscarExerciciosAction } from "@/app/actions";
 
@@ -73,34 +73,36 @@ export default function ExecutarTreinoPage({ params }: { params: Promise<{ id: s
   const [loading, setLoading] = useState(false);
   const [loadingDados, setLoadingDados] = useState(true);
   const [finalizado, setFinalizado] = useState(false);
-  const [proximoTreinoNome, setProximoTreinoNome] = useState("");
+  const [proximoTreinoNome, setProximoTreinoNome] = useState(""); 
   const [logTreino, setLogTreino] = useState<any[]>([]);
   const [concluidosIds, setConcluidosIds] = useState<string[]>([]);
 
   useEffect(() => {
-  async function carregar() {
-    try {
-      const res = await buscarExerciciosAction(id);
-      if (res.success) {
-        const lista = res.exercicios || []; 
-        setExercicios(lista);
-        setNomeTreino(res.nomeTreino || "");
+    async function carregar() {
+      try {
+        const res = await buscarExerciciosAction(id);
+        if (res.success) {
+          const lista = res.exercicios || []; 
+          setExercicios(lista);
+          setNomeTreino(res.nomeTreino || "");
+        }
+      } catch (err) {
+        console.error("Erro ao carregar dados:", err);
+      } finally {
+        setLoadingDados(false);
       }
-    } catch (err) {
-      console.error("Erro ao carregar dados:", err);
-    } finally {
-      setLoadingDados(false);
     }
-  }
-  carregar();
-}, [id]);
+    carregar();
+  }, [id]);
 
   const handleFinalizar = async () => {
     if (!session?.user) return;
     setLoading(true);
+    
     const res = await registrarTreinoCompleto(id, (session.user as any).id, nomeTreino, logTreino);
+    
     if (res.success) {
-      setProximoTreinoNome(res.proximoTreino || "");
+      setProximoTreinoNome(res.proximoTreinoNome || "Descanso"); 
       setFinalizado(true);
     }
     setLoading(false);
@@ -109,11 +111,26 @@ export default function ExecutarTreinoPage({ params }: { params: Promise<{ id: s
   if (loadingDados) return <div className="min-h-screen bg-black flex items-center justify-center"><Loader2 className="animate-spin text-blue-600" size={32} /></div>;
 
   if (finalizado) return (
-    <div className="min-h-screen bg-black p-6 flex flex-col items-center justify-center text-center max-w-md mx-auto">
-      <Trophy size={60} className="text-blue-500 mb-6" />
-      <h1 className="text-3xl font-black italic uppercase text-white leading-none mb-2">Treino Pago!</h1>
-      <p className="text-zinc-500 text-sm mb-8 uppercase font-bold tracking-widest">Amanhã seu treino é: <span className="text-blue-500">{proximoTreinoNome}</span></p>
-      <button onClick={() => router.push("/treinos")} className="w-full bg-white text-black font-black py-5 rounded-2xl uppercase italic">Voltar ao Início</button>
+    <div className="min-h-screen bg-black p-8 flex flex-col items-center justify-center text-center max-w-md mx-auto">
+      <div className="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mb-8 border border-blue-500/30">
+        <Trophy size={40} className="text-blue-500" />
+      </div>
+      
+      <h1 className="text-4xl font-black italic uppercase text-white leading-none mb-4 tracking-tighter">Treino Pago!</h1>
+      
+      <div className="flex flex-col items-center mb-12">
+        <p className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.3em] mb-2">Amanhã seu treino é:</p>
+        <h3 className="text-2xl font-black italic uppercase text-blue-500 tracking-tight">
+          {proximoTreinoNome}
+        </h3>
+      </div>
+
+      <button 
+        onClick={() => router.push("/")} 
+        className="w-full bg-white text-black font-black py-5 rounded-[2rem] uppercase italic text-sm tracking-widest shadow-xl active:scale-95 transition-all"
+      >
+        Voltar ao Início
+      </button>
     </div>
   );
 
@@ -121,9 +138,12 @@ export default function ExecutarTreinoPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="min-h-screen bg-black text-white p-6 pb-40 max-w-md mx-auto flex flex-col">
-      <header className="mb-8 flex justify-between items-center">
-        <button onClick={() => router.back()} className="text-zinc-600"><X size={24} /></button>
-        <h2 className="text-xs font-black uppercase italic text-zinc-500 tracking-widest">{nomeTreino}</h2>
+      <header className="mb-8 flex justify-between items-center px-1">
+        <button onClick={() => router.back()} className="text-zinc-600 hover:text-white transition-colors"><X size={24} /></button>
+        <div className="text-right">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 block">Executando</span>
+          <h2 className="text-sm font-black uppercase italic text-white tracking-widest">{nomeTreino}</h2>
+        </div>
       </header>
 
       <div className="flex-1">
@@ -131,16 +151,17 @@ export default function ExecutarTreinoPage({ params }: { params: Promise<{ id: s
           <ExercicioCard key={ex.id} index={i} ex={ex} onSerieConcluida={(reg) => {
             setLogTreino(p => [...p, reg]);
             const numSets = parseInt(ex.sets);
-            if (reg.setNumber === numSets) setConcluidosIds(p => [...p, ex.id]);
+            const exercicioJaConcluido = logTreino.filter(l => l.exerciseId === ex.id).length + 1 === numSets;
+            if (exercicioJaConcluido) setConcluidosIds(p => [...p, ex.id]);
           }} />
         ))}
       </div>
 
-      <footer className="fixed bottom-32 left-0 right-0 px-6 max-w-md mx-auto z-50">
+      <footer className="fixed bottom-28 left-0 right-0 px-6 max-w-md mx-auto z-[60]">
         <button 
           disabled={!prontoParaFinalizar || loading}
           onClick={handleFinalizar}
-          className="w-full bg-green-600 text-black font-black py-5 rounded-2xl flex items-center justify-center gap-3 uppercase italic text-lg shadow-xl disabled:opacity-20 disabled:grayscale transition-all"
+          className="w-full bg-blue-600 text-white font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 uppercase italic text-lg shadow-[0_20px_50px_rgba(37,99,235,0.3)] disabled:opacity-20 disabled:grayscale transition-all active:scale-95 border border-blue-400/30"
         >
           {loading ? <Loader2 className="animate-spin" /> : <CheckCircle size={22} />}
           {loading ? "Salvando..." : "Concluir Treino"}
