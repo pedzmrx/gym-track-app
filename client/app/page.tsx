@@ -92,7 +92,7 @@ export default async function DashboardPage() {
       <section className="mb-10 px-1">
         <div className="flex justify-between items-center mb-6">
           <h4 className="text-sm font-black uppercase tracking-widest text-zinc-400 font-sans">Consistência</h4>
-          <Link href="/evolucao" className="text-blue-500 text-[10px] font-black uppercase tracking-widest">Ver Evolução</Link>
+          <Link href="/dashboard" className="text-blue-500 text-[10px] font-black uppercase tracking-widest">Ver Evolução</Link>
         </div>
         
         <div className="flex items-center justify-between">
