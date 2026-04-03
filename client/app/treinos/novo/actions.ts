@@ -1,18 +1,10 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
-
-const connectionString = process.env.DATABASE_URL;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool as any);
-
-const prisma = new PrismaClient({ adapter });
+import { prisma } from "@/lib/prisma"; 
 
 export async function salvarTreinoAction(nome: string, exercicios: any[], userId: string) {
   try {
-    console.log("🚀 Iniciando salvamento do treino...");
+    console.log("🚀 Iniciando salvamento do treino no Supabase...");
 
     if (!userId) throw new Error("Usuário não identificado na sessão.");
 
@@ -30,10 +22,10 @@ export async function salvarTreinoAction(nome: string, exercicios: any[], userId
       }
     });
     
-    console.log("✅ Treino salvo com ID:", novoTreino.id);
+    console.log("✅ Treino salvo com sucesso! ID:", novoTreino.id);
     return { success: true };
   } catch (error: any) {
-    console.error("❌ ERRO NO PRISMA:", error);
+    console.error("❌ ERRO NO PRISMA AO SALVAR:", error);
     return { success: false, error: error.message };
   }
 }

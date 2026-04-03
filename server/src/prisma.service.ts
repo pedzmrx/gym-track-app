@@ -1,20 +1,25 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
-    const pool = new Pool({ 
-      connectionString: "postgresql://admin:password123@localhost:5432/gym_db?schema=public" 
+    super({
+      log: ['query', 'info', 'warn', 'error'],
     });
-    const adapter = new PrismaPg(pool as any);
-
-    super({ adapter } as any);
+    (this as any)._url = process.env.DATABASE_URL;
   }
 
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+      console.log('✅ Conectado ao Supabase com sucesso (NestJS)');
+    } catch (error) {
+      console.error('❌ Erro ao conectar no Supabase:', error);
+    }
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
   }
 }
